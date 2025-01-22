@@ -1,6 +1,6 @@
 <script setup>
 import { ref, useTemplateRef, onMounted } from 'vue'
-import Tetris from './lib/Tetris'
+import Game from './lib/Game';
 
 // 获取画布dom引用
 const stageDom = useTemplateRef('stage')
@@ -8,15 +8,22 @@ const stageDom = useTemplateRef('stage')
 // 游戏实例
 let game = null
 
+
+let start = () => {
+    game.createBackground()
+}
+
 onMounted(() => {
 
     console.time("aaa")
+
     // 实例化化游戏
-    game = new Tetris({
+    game = new Game({
         view: stageDom.value, // 画布dom
         cols: 13,
         rows: 20,
         viewHeight: 600,
+        viewWidth: 400,
         squareSize: 30,
         squareSpace: 1
     })
@@ -30,11 +37,29 @@ onMounted(() => {
 
 <template>
 
-    <div class="flex bg-slate-400" style="min-width: 300px;">
+    <div class="flex bg-white p-2" style="min-width: 230px;">
+
+        <a-form layout="vertical" size="mini">
+            <a-form-item field="name" label="Username">
+                <a-input placeholder="please enter your username..." />
+            </a-form-item>
+            <a-form-item field="post" label="Post">
+                <a-input placeholder="please enter your post..." />
+            </a-form-item>
+            <a-form-item field="isRead">
+                <a-checkbox>
+                    I have read the manual
+                </a-checkbox>
+            </a-form-item>
+            <a-form-item>
+                <a-button @click="start">start</a-button>
+            </a-form-item>
+        </a-form>
+
 
     </div>
 
-    <div class="flex flex-1 justify-center items-center gap-5 bg-stone-300">
+    <div class="flex flex-1 justify-center items-center gap-5 bg-white">
         <div class="h-auto bg-amber-100">
             <div ref="stage"></div>
         </div>
