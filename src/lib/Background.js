@@ -14,38 +14,58 @@ export default class Background {
     ]
 
 
-    constructor(options) {
+    constructor(attrs) {
 
-        this.attrs = {
-            leafer: options.leafer ?? null, // 画布容器
-            rows: options.rows ?? 20, // 行数
-            cols: options.cols ?? 13, // 列数
-            squareSize: options.squareSize ?? 20, // 方块大小
-            squareSpace: options.squareSpace ?? 1, // 方块间隔
-            squareColor: options.squareColor ?? "#000",// 方块颜色
-            r: options.r ?? 0, // 起始位置 行
-            c: options.c ?? 0, // 起始位置 列
-        }
+        // 基础属性
+        this.rows = attrs.rows // 行数
+        this.cols = attrs.cols // 列数
+        this.squareSize = attrs.squareSize // 方块大小
+        this.squareSpace = attrs.squareSpace // 方块间隔
+        this.squareColor = attrs.squareColor // 方块颜色
+
 
         // 实例化group
         this.group = new Group()
-        this.attrs.leafer.add(this.group)
 
         // 图形索引
         this.pointIndex = 0
 
         // 当前位置
-        this.position = { r: this.attrs.r, c: this.attrs.c }
+        this.position = [0, 0]
 
         // 图形点数组
         this.rects = []
 
-        // 初始化
-        // this.init()
-
     }
 
 
+    // 渲染图形
+    render(pointIndex = 0, r = 0, c = 0) {
+
+        // 图形索引
+        this.pointIndex = pointIndex
+
+        // 设置图形位置
+        this.position = [r, c]
+
+        // 创建图形
+        for (const point of Background.points[pointIndex]) this.createRect(point)
+
+    }
+
+    // 创建图形点
+    createRect(point) {
+        const rect = new Rect({
+            width: this.squareSize,
+            height: this.squareSize,
+            fill: this.squareColor,
+            x: point[1] * (this.squareSize + this.squareSpace),
+            y: point[0] * (this.squareSize + this.squareSpace)
+        })
+        this.group.add(rect)
+        this.rects.push(rect)
+
+    }
 
 
 }

@@ -2,6 +2,7 @@ import { App, Leafer, Rect } from 'leafer-ui'
 import Background from './Background'
 
 export default class Game {
+
     constructor(options) {
 
         // 默认属性
@@ -95,14 +96,9 @@ export default class Game {
     // 创建背景元素
     createBackground() {
 
-        this.background = new Background({
-            leafer: this.app.ground,
-            rows: this.attrs.rows,
-            cols: this.attrs.cols,
-            squareSize: this.attrs.squareSize,
-            squareSpace: this.attrs.squareSpace,
-            squareColor: this.attrs.squareColor,
-        })
+        this.background = new Background(this.attrs)
+        this.app.ground.add(this.background.group)
+        this.background.render()
 
 
     }
