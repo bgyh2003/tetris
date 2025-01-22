@@ -74,7 +74,7 @@ export default class Background {
 
         // 更新位置
         this.position = [r, c]
-
+        
     }
 
 
