@@ -1,25 +1,27 @@
 <script setup>
 import { ref, useTemplateRef, onMounted } from 'vue'
-import Tetris from './lib/Tetris';
+import Tetris from './lib/Tetris'
 
 // 获取画布dom引用
-const stage = useTemplateRef('stage')
+const stageDom = useTemplateRef('stage')
 
 // 游戏实例
 let game = null
 
 onMounted(() => {
 
+    console.time("aaa")
     // 实例化化游戏
     game = new Tetris({
-        view: stage.value, // 画布dom
-        width: 300, // 画面宽度
-        height: 600, // 画面高度
-        cols: 10,// 横向方块数
-        rows: 20,// 纵向方块数
+        view: stageDom.value, // 画布dom
+        cols: 13,
+        rows: 20,
+        viewHeight: 600,
+        squareSize: 30,
+        squareSpace: 1
     })
 
-
+    console.timeEnd("aaa")
 
 })
 
@@ -28,35 +30,18 @@ onMounted(() => {
 
 <template>
 
-    <div class="left">
-        123
+    <div class="flex bg-slate-400" style="min-width: 300px;">
+
     </div>
 
-    <div class="right">
-        <div class="stage" ref="stage"></div>
+    <div class="flex flex-1 justify-center items-center gap-5 bg-stone-300">
+        <div class="h-auto bg-amber-100">
+            <div ref="stage"></div>
+        </div>
+        <div class=" h-auto bg-slate-200" style="height: 600px; width: 200px;"></div>
     </div>
 
 
 </template>
 
-<style scoped>
-.left {
-    display: flex;
-    width: 300px;
-    height: 100%;
-    background-color: rgb(118, 154, 187);
-}
-
-.right {
-    display: flex;
-    flex: 1;
-    height: 100%;
-    background-color: rgb(187, 118, 118);
-    justify-content: center;
-    align-items: center;
-}
-
-.stage {
-    background-color: bisque;
-}
-</style>
+<style scoped></style>
