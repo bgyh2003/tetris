@@ -67,5 +67,15 @@ export default class Background {
 
     }
 
+    moveTo(r, c) {
+
+        // 移动图形
+        this.group.moveTo(c * (this.squareSize + this.squareSpace), r * (this.squareSize + this.squareSpace))
+
+        // 更新位置
+        this.position = [r, c]
+
+    }
+
 
 }
