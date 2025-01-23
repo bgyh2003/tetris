@@ -7,15 +7,14 @@ const stageDom = useTemplateRef('stage')
 
 // 游戏实例
 let game = null
-
-
 let start = () => {
-    game.createBackground()
+    game.createElement('T')
 }
+
 
 onMounted(() => {
 
-    console.time("aaa")
+    console.time("init game")
 
     // 实例化化游戏
     game = new Game({
@@ -28,7 +27,7 @@ onMounted(() => {
         squareSpace: 1
     })
 
-    console.timeEnd("aaa")
+    console.timeEnd("init game")
 
 })
 
@@ -53,6 +52,18 @@ onMounted(() => {
             </a-form-item>
             <a-form-item>
                 <a-button @click="start">start</a-button>
+
+            </a-form-item>
+            <a-form-item>
+                <a-button @click="game.moveLeft()">left</a-button>
+                <a-button @click="game.moveRight()">right</a-button>
+                <a-button @click="game.moveDown()">down</a-button>
+                <a-button @click="game.rotate()">rotate</a-button>
+            </a-form-item>
+
+            <a-form-item>
+                <a-button @click="game.moveToBottom()">buttom</a-button>
+
             </a-form-item>
         </a-form>
 
@@ -63,7 +74,7 @@ onMounted(() => {
         <div class="h-auto bg-amber-100">
             <div ref="stage"></div>
         </div>
-        <div class=" h-auto bg-slate-200" style="height: 600px; width: 200px;"></div>
+        <!-- <div class=" h-auto bg-slate-200" style="height: 600px; width: 200px;"></div> -->
     </div>
 
 

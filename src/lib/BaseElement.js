@@ -1,86 +1,180 @@
+import { Group, Rect, Box } from "leafer-ui"
 export default class BaseElement {
 
-    constructor(options) {
+    constructor(attrs) {
 
-        // 默认属性
-        this.attrs = {
-            leafer: null, // 画布容器
-            rows: 20, // 行数
-            cols: 13, // 列数
-            squareSize: 20, // 方块大小
-            squareSpace: 1, // 方块间隔
-            squareColor: "#fff",// 背景颜色
-            ...options
+        // 基础属性
+        this.rows = attrs.rows // 行数
+        this.cols = attrs.cols // 列数
+        this.squareSize = attrs.squareSize // 方块大小
+        this.squareSpace = attrs.squareSpace // 方块间隔
+        this.squareColor = attrs.squareColor // 方块颜色
+
+        // 单个方块尺寸
+        this.size = this.squareSize + this.squareSpace
+
+        // 实例化group
+        this.group = new Group()
+
+        // 当前位置
+        this.position = [0, 0]
+
+        // 图形索引
+        this.boxIndex = 0
+
+        // 图形组
+        this.boxes = []
+
+    }
+
+    // 初始化图形
+    init(imageData) {
+
+        // 创建图形
+        for (const points of imageData.points) {
+            const box = this.createBox(points)
+            this.boxes.push(box)
+            this.group.add(box)
         }
 
-        // 当前偏移位置
-        this.offset = { r: 0, c: 0 }
-
-        // 实例化box
-        this.box = new Box()
-        this.attrs.leafer.add(this.box)
-
-        // 图形点数组
-        this.points = []
+        // 显示第一个图形
+        this.switchBox(0)
     }
 
-    // 创建point对象
-    createPoint(row, col) {
+    // 创建图形
+    createBox(points) {
 
-        // point真实位置（偏移后位置）
-        const realRow = this.offset.r + row
-        const realCol = this.offset.c + col
+        // 创建box
+        const box = new Box({ visible: false })
 
-        // point对象
-        const point = {
-            row: row,
-            col: col,
-            realRow: realRow,
-            realCol: realCol,
-            rect: new Rect({
-                x: realCol * (this.attrs.squareSize + this.attrs.squareSpace) + this.attrs.squareSpace,
-                y: realRow * (this.attrs.squareSize + this.attrs.squareSpace) + this.attrs.squareSpace,
-                width: this.attrs.squareSize,
-                height: this.attrs.squareSize,
-                fill: this.attrs.squareColor
-            })
+        // 遍历点集合
+        for (const point of points) {
+            const rect = this.createRect(point)
+            box.add(rect)
         }
-        this.box.add(point.rect)
-        this.points.push(point)
 
+        return box
     }
 
-    // 载入points组
-    loadPointsGroup(pointsGroup) {
-        pointsGroup
-    }
+    // 创建点
+    createRect(point) {
 
-    // 载入point
-    loadPoints(points) {
-        this.clear()
-        points.forEach(point => this.createPoint(point[0], point[1]))
-    }
+        // 提取颜色
+        const color = point[2]
 
+        // 获取坐标
+        const { x, y } = this.pointToPosition(point)
 
-    // 移动到指定
-    moveTo(r, c) {
-        this.offset.r = r
-        this.offset.c = c
-        this.points.forEach(point => {
-            point.realRow = this.offset.r + point.row
-            point.realCol = this.offset.c + point.col
-            point.rect.x = point.realCol * (this.attrs.squareSize + this.attrs.squareSpace) + this.attrs.squareSpace
-            point.rect.y = point.realRow * (this.attrs.squareSize + this.attrs.squareSpace) + this.attrs.squareSpace
-
+        // 创建rect
+        const rect = new Rect({
+            width: this.squareSize,
+            height: this.squareSize,
+            fill: color ?? this.squareColor,
+            x: x + this.squareSpace,
+            y: y + this.squareSpace,
+            data: { point: point }
         })
+
+        return rect
     }
 
-    // 清空
-    clear() {
-        this.points.forEach(point => point.rect.destroy())
-        this.points = []
+    // 添加点组
+    addPoints(points) {
+
+        // 提取当前box
+        const box = this.boxes.at(this.boxIndex)
+        for (const point of points) {
+            const rect = this.createRect(point)
+            box.add(rect)
+        }
+
     }
 
+    // 点坐标转换为位置
+    pointToPosition(point) {
+        return {
+            x: point[0] * this.size,
+            y: point[1] * this.size
+        }
+    }
+
+    // 切换图片
+    switchBox(index) {
+
+        // 获取当前box
+        const box = this.boxes.at(this.boxIndex)
+        if (!box) return
+
+        // 隐藏当前box
+        box.visible = false
+
+        // 计算新的索引
+        index = index === undefined ? this.boxIndex + 1 : index
+        this.boxIndex = index % this.boxes.length
+
+        // 显示下一个box
+        this.boxes.at(this.boxIndex).visible = true
+    }
+
+    // 移动到指定位置
+    moveTo(c, r) {
+
+        const { x, y } = this.pointToPosition([c, r])
+
+        // 移动图形
+        this.group.x = x
+        this.group.y = y
+
+        // 更新位置
+        this.position = [c, r]
+
+    }
+
+    // 向左移动
+    moveLeft() {
+        const [c, r] = this.position
+        this.moveTo(c - 1, r)
+    }
+
+    // 向右移动
+    moveRight() {
+        const [c, r] = this.position
+        this.moveTo(c + 1, r)
+    }
+
+    // 向下移动
+    moveDown() {
+        const [c, r] = this.position
+        this.moveTo(c, r + 1)
+    }
+
+    // 向上移动
+    moveUp() {
+        const [c, r] = this.position
+        this.moveTo(c, r - 1)
+    }
+
+    // 获取当前图形绝对点坐标
+    getAbsolutePoints() {
+
+        // 存储结果
+        const res = []
+
+        // 获取当前图形的相对点坐标
+        const [baseC, baseR] = this.position
+
+        // 获取当前图形box
+        const box = this.boxes[this.boxIndex]
+
+        // 遍历所有Rect
+        for (const rect of box.find("Rect")) {
+            const [c, r] = rect.data.point
+            res.push([baseC + c, baseR + r])
+        }
+
+        return res
+
+    }
 
 
 }

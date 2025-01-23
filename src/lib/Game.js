@@ -1,5 +1,6 @@
 import { App, Leafer, Rect } from 'leafer-ui'
 import Background from './Background'
+import ElementT from './ElementT'
 
 export default class Game {
 
@@ -60,6 +61,9 @@ export default class Game {
         // 元素对象
         this.element = null
 
+        // 创建背景
+        this.createBackground()
+
     }
 
     // 创建背景网格线条
@@ -95,13 +99,66 @@ export default class Game {
 
     // 创建背景元素
     createBackground() {
-
         this.background = new Background(this.attrs)
         this.app.ground.add(this.background.group)
-        this.background.render()
 
+        // 干扰行
+        const points = []
+
+        // 创建干扰行
+        let i = 0
+        for (let r = this.attrs.rows - 4; r < this.attrs.rows; r++) {
+            for (let c = i % 2; c < this.attrs.cols; c += 2)points.push([c, r])
+            i++
+        }
+
+        // 添加干扰行
+        this.background.addPoints(points)
+    }
+
+    // 创建元素
+    createElement(type) {
+
+        switch (type) {
+            case 'T':
+                this.element = new ElementT(this.attrs)
+                this.app.tree.add(this.element.group)
+                break
+            case 'I':
+                this.element = new ElementI(this.attrs)
+                this.app.tree.add(this.element.group)
+                break
+            case 'O':
+                this.element = new ElementO(this.attrs)
+                this.app.tree.add(this.element.group)
+                break
+            case 'L':
+                this.element = new ElementL(this.attrs)
+                this.app.tree.add(this.element.group)
+                break
+            case 'Z':
+                this.element = new ElementZ(this.attrs)
+                this.app.tree.add(this.element.group)
+                break
+        }
 
     }
 
+    moveDown() {
+        this.element.moveDown()
+    }
+    moveLeft() {
+        this.element.moveLeft()
+    }
+    moveRight() {
+        this.element.moveRight()
+    }
+    moveToBottom() {
+        console.log(this.element.getAbsolutePoints())
+    }
+
+    rotate() {
+        this.element.switchBox()
+    }
 
 }
