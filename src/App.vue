@@ -63,7 +63,8 @@ onMounted(() => {
 
             <a-form-item>
                 <a-button @click="game.moveToBottom()">buttom</a-button>
-
+                <a-button @click="game.merge()">merge</a-button>
+                <a-button @click="game.clearRow()">clearRow</a-button>
             </a-form-item>
         </a-form>
 

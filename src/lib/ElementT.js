@@ -4,7 +4,7 @@ export default class ElementT extends BaseElement {
 
     static imageData = {
 
-        center: [0, 0],
+        anchor: [1, 0],
 
         points: [
             [

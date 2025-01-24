@@ -1,7 +1,6 @@
-import { App, Leafer, Rect } from 'leafer-ui'
+import { App, Leafer, Rect, Group, Box } from 'leafer-ui'
 import Background from './Background'
 import ElementT from './ElementT'
-
 export default class Game {
 
     constructor(options) {
@@ -101,14 +100,23 @@ export default class Game {
     createBackground() {
         this.background = new Background(this.attrs)
         this.app.ground.add(this.background.group)
+        this.createInterferenceRow(2)
+    }
 
-        // 干扰行
+    // 创建干扰行
+    createInterferenceRow(num) {
+
         const points = []
 
         // 创建干扰行
         let i = 0
-        for (let r = this.attrs.rows - 4; r < this.attrs.rows; r++) {
-            for (let c = i % 2; c < this.attrs.cols; c += 2)points.push([c, r])
+        // for (let r = this.attrs.rows - num; r < this.attrs.rows; r++) {
+        //     for (let c = i % 2; c < this.attrs.cols; c += 2)points.push([c, r])
+        //     i++
+        // }
+
+        for (let r = this.attrs.rows - num; r < this.attrs.rows; r++) {
+            for (let c = 0; c < this.attrs.cols-1; c++)points.push([c, r])
             i++
         }
 
@@ -122,43 +130,83 @@ export default class Game {
         switch (type) {
             case 'T':
                 this.element = new ElementT(this.attrs)
-                this.app.tree.add(this.element.group)
                 break
             case 'I':
                 this.element = new ElementI(this.attrs)
-                this.app.tree.add(this.element.group)
                 break
             case 'O':
                 this.element = new ElementO(this.attrs)
-                this.app.tree.add(this.element.group)
                 break
             case 'L':
                 this.element = new ElementL(this.attrs)
-                this.app.tree.add(this.element.group)
                 break
             case 'Z':
                 this.element = new ElementZ(this.attrs)
-                this.app.tree.add(this.element.group)
                 break
         }
+
+        // 设置位置
+        this.element.moveTo(Math.floor(this.attrs.cols / 2), 0)
+
+        // 添加到主画布中
+        this.app.tree.add(this.element.group)
 
     }
 
     moveDown() {
+        // 检测是否到边缘
+        if (this.element.distance(this.background, "down") === 0) return
+        if (this.element.distanceEdge("down") === 0) return
+        // 移动
         this.element.moveDown()
     }
+
     moveLeft() {
+        // 检测是否到边缘
+        if (this.element.distance(this.background, "left") === 0) return
+        if (this.element.distanceEdge("left") === 0) return
+        // 移动
         this.element.moveLeft()
     }
+
     moveRight() {
+        // 检测是否到边缘
+        if (this.element.distance(this.background, "right") === 0) return
+        if (this.element.distanceEdge("right") === 0) return
+        // 移动
         this.element.moveRight()
     }
+
     moveToBottom() {
-        console.log(this.element.getAbsolutePoints())
+        // 计算到底部距离
+        let d = this.element.distance(this.background, "down")
+        if (d === null) d = this.element.distanceEdge("down")
+        // 移动
+        this.element.moveDown(d)
     }
 
     rotate() {
-        this.element.switchBox()
+
+        // 切换图片
+        this.element.nextBox()
+
+
+        // 如果触碰到边缘，恢复上一个图片
+        if (
+            this.element.collisionDetection(this.background) ||
+            this.element.collisionDetectionEdge()
+        ) {
+            this.element.lastBox()
+        }
+    }
+
+    merge() {
+        this.background.merge(this.element)
+        this.element.destroy()
+    }
+
+    clearRow() {
+        this.background.clearRow()
     }
 
 }

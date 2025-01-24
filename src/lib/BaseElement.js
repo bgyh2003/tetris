@@ -19,6 +19,13 @@ export default class BaseElement {
         // 当前位置
         this.position = [0, 0]
 
+        // 锚点
+        this.anchor = [0, 0]
+
+        // 偏移量
+        this.offsetX = 0
+        this.offsetY = 0
+
         // 图形索引
         this.boxIndex = 0
 
@@ -29,6 +36,13 @@ export default class BaseElement {
 
     // 初始化图形
     init(imageData) {
+
+        // 锚点
+        this.anchor = imageData.anchor
+
+        // 偏移量
+        this.offsetX = -(this.anchor[0] * this.size)
+        this.offsetY = -(this.anchor[1] * this.size)
 
         // 创建图形
         for (const points of imageData.points) {
@@ -72,7 +86,9 @@ export default class BaseElement {
             fill: color ?? this.squareColor,
             x: x + this.squareSpace,
             y: y + this.squareSpace,
-            data: { point: point }
+            data: { point: point },
+            offsetX: this.offsetX,
+            offsetY: this.offsetY
         })
 
         return rect
@@ -108,12 +124,25 @@ export default class BaseElement {
         // 隐藏当前box
         box.visible = false
 
-        // 计算新的索引
-        index = index === undefined ? this.boxIndex + 1 : index
-        this.boxIndex = index % this.boxes.length
+        // 更新索引
+        this.boxIndex = index
 
         // 显示下一个box
         this.boxes.at(this.boxIndex).visible = true
+    }
+
+    // 下一个图片
+    nextBox() {
+        const index = this.boxIndex + 1
+        const nextIndex = index >= this.boxes.length ? 0 : index
+        this.switchBox(nextIndex)
+    }
+
+    // 上一个图片
+    lastBox() {
+        const index = this.boxIndex - 1
+        const nextIndex = index < 0 ? this.boxes.length - 1 : index
+        this.switchBox(nextIndex)
     }
 
     // 移动到指定位置
@@ -131,27 +160,27 @@ export default class BaseElement {
     }
 
     // 向左移动
-    moveLeft() {
+    moveLeft(d = 1) {
         const [c, r] = this.position
-        this.moveTo(c - 1, r)
+        this.moveTo(c - d, r)
     }
 
     // 向右移动
-    moveRight() {
+    moveRight(d = 1) {
         const [c, r] = this.position
-        this.moveTo(c + 1, r)
+        this.moveTo(c + d, r)
     }
 
     // 向下移动
-    moveDown() {
+    moveDown(d = 1) {
         const [c, r] = this.position
-        this.moveTo(c, r + 1)
+        this.moveTo(c, r + d)
     }
 
     // 向上移动
-    moveUp() {
+    moveUp(d = 1) {
         const [c, r] = this.position
-        this.moveTo(c, r - 1)
+        this.moveTo(c, r - d)
     }
 
     // 获取当前图形绝对点坐标
@@ -169,12 +198,126 @@ export default class BaseElement {
         // 遍历所有Rect
         for (const rect of box.find("Rect")) {
             const [c, r] = rect.data.point
-            res.push([baseC + c, baseR + r])
+            const anchorC = this.anchor[0]
+            const anchorR = this.anchor[1]
+            res.push([baseC + c - anchorC, baseR + r - anchorR])
         }
 
         return res
 
     }
 
+    // 计算距离
+    distance(element, direction = "down") {
 
+        let res = null
+
+        // 获取两个图形的绝对点坐标
+        const points0 = this.getAbsolutePoints()
+        const points1 = element.getAbsolutePoints()
+
+        for (const point0 of points0) {
+            const [c0, r0] = point0
+            for (const point1 of points1) {
+                const [c1, r1] = point1
+
+                if (direction === "down" && c0 === c1 && r0 <= r1) {
+                    const d = r1 - r0 - 1
+                    if (res === null || d < res) res = d
+                }
+
+                if (direction === "right" && r0 === r1 && c0 <= c1) {
+                    const d = c1 - c0 - 1
+                    if (res === null || d < res) res = d
+                }
+
+                if (direction === "left" && r0 === r1 && c0 >= c1) {
+                    const d = c0 - c1 - 1
+                    if (res === null || d < res) res = d
+                }
+
+                if (direction === "up" && c0 === c1 && r0 >= r1) {
+                    const d = r0 - r1 - 1
+                    if (res === null || d < res) res = d
+                }
+
+            }
+        }
+
+        return res
+    }
+
+    // 计算边界距离
+    distanceEdge(direction = "down") {
+        let res = null
+
+        const points = this.getAbsolutePoints()
+
+        for (const point of points) {
+            const [c, r] = point
+
+            if (direction === "down") {
+                const d = this.rows - r - 1
+                if (res === null || d < res) res = d
+            }
+            if (direction === "right") {
+                const d = this.cols - c - 1
+                if (res === null || d < res) res = d
+            }
+            if (direction === "left") {
+                const d = c
+                if (res === null || d < res) res = d
+            }
+            if (direction === "up") {
+                const d = r
+                if (res === null || d < res) res = d
+            }
+
+        }
+
+        return res
+
+    }
+
+    // 碰撞检测
+    collisionDetection(element) {
+
+        // 获取两个图形的绝对点坐标
+        const points0 = this.getAbsolutePoints()
+        const points1 = element.getAbsolutePoints()
+
+        // 遍历所有点
+        for (const point0 of points0) {
+            for (const point1 of points1) {
+                if (point0[0] === point1[0] && point0[1] === point1[1]) return true
+            }
+        }
+
+        return false
+    }
+
+    // 边界碰撞检测
+    collisionDetectionEdge() {
+
+        // 获取图形的绝对点坐标
+        const points = this.getAbsolutePoints()
+
+        // 遍历所有点
+        for (const point of points) {
+            if (point[0] < 0 || point[0] >= this.cols || point[1] < 0 || point[1] >= this.rows) return true
+        }
+
+        return false
+    }
+
+    // 合并
+    merge(element) {
+        const points = element.getAbsolutePoints()
+        this.addPoints(points)
+    }
+
+    // 注销
+    destroy() {
+        this.group.destroy()
+    }
 }
