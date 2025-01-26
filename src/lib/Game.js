@@ -208,6 +208,9 @@ export default class Game {
         // 合并
         this.merge()
 
+        // 创建新的元素
+        this.createElement(this.getRandomType())
+
         // 清除行 
         this.clearRow()
 
@@ -231,7 +234,6 @@ export default class Game {
     merge() {
         this.background.merge(this.element)
         this.element.destroy()
-        this.createElement(this.getRandomType())
     }
 
     clearRow() {
@@ -257,6 +259,7 @@ export default class Game {
                 this.element.distanceEdge("down") === 0
             ) {
                 this.merge()
+                this.createElement(this.getRandomType())
                 this.clearRow()
             } else {
                 this.moveDown()
