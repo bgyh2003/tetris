@@ -1,5 +1,4 @@
 import BaseElement from "./BaseElement"
-import { Animate } from '@leafer-in/animate' // 加载动画插件
 
 export default class Background extends BaseElement {
 
@@ -20,9 +19,10 @@ export default class Background extends BaseElement {
         this.init(Background.imageData)
     }
 
-
     // 消除行
     clearRow() {
+
+        let minR = 0
 
         // 满行列表
         const rows = []
@@ -43,20 +43,40 @@ export default class Background extends BaseElement {
         // 获取满行列表
         for (const r in rowMap) if (rowMap[r].length === this.cols) rows.push(+r)
 
-        // 消除行
-        for (const rect of this.boxes[this.boxIndex].find("Rect")) {
-            if (rows.includes(rect.data.point[1])) {
+        // 存在满行
+        if (rows.length > 0) {
 
-                new Animate(
-                    rect,
-                    { x: 0 },
-                    {
-                        duration: 1,
-                    }
-                )
+            const rects = this.boxes[this.boxIndex].find("Rect").sort((a, b) => b.data.point[1] - a.data.point[1])
+
+            // 消除行
+            for (const rect of rects) {
+                if (rows.includes(rect.data.point[1])) {
+                    rect.$moveLeft(this.cols, {
+                        duration: 0.2,
+                        event: { completed() { rect.destroy() } }
+                    })
+                }
             }
+
+            // 获取消除的最小行号
+            minR = Math.min(...rows)
+
+            // 移动行
+            for (const rect of rects) {
+                if (rect.data.point[1] < minR) {
+                    rect.$moveDown(rows.length, { duration: 0.2, delay: 0.2 })
+                }
+            }
+
+
         }
 
+
+        // 返回消除的行数和行号
+        return {
+            num: rows.length,
+            rows
+        }
 
     }
 

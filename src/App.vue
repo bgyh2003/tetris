@@ -7,10 +7,6 @@ const stageDom = useTemplateRef('stage')
 
 // 游戏实例
 let game = null
-let start = () => {
-    game.createElement('T')
-}
-
 
 onMounted(() => {
 
@@ -51,8 +47,9 @@ onMounted(() => {
                 </a-checkbox>
             </a-form-item>
             <a-form-item>
-                <a-button @click="start">start</a-button>
-
+                <a-button @click="game.start()">start</a-button>
+                <a-button @click="game.pause()">pause</a-button>
+                <a-button @click="game.stop()">stop</a-button>
             </a-form-item>
             <a-form-item>
                 <a-button @click="game.moveLeft()">left</a-button>
@@ -63,8 +60,6 @@ onMounted(() => {
 
             <a-form-item>
                 <a-button @click="game.moveToBottom()">buttom</a-button>
-                <a-button @click="game.merge()">merge</a-button>
-                <a-button @click="game.clearRow()">clearRow</a-button>
             </a-form-item>
         </a-form>
 

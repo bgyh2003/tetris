@@ -1,4 +1,6 @@
 import { Group, Rect, Box } from "leafer-ui"
+import '@leafer-in/animate'
+import "@leafer-in/find"
 export default class BaseElement {
 
     constructor(attrs) {
@@ -12,6 +14,10 @@ export default class BaseElement {
 
         // 单个方块尺寸
         this.size = this.squareSize + this.squareSpace
+
+        // 计算画布实际宽高
+        this.realWidth = this.cols * (this.squareSize + this.squareSpace) + this.squareSpace
+        this.realHeight = this.rows * (this.squareSize + this.squareSpace) + this.squareSpace
 
         // 实例化group
         this.group = new Group()
@@ -90,6 +96,20 @@ export default class BaseElement {
             offsetX: this.offsetX,
             offsetY: this.offsetY
         })
+
+        // 移动到坐标
+        rect.$moveTo = (c = 0, r = 0, transition) => {
+            let { x, y } = this.pointToPosition([c, r])
+            rect.set({ x: x + this.squareSpace, y: y + this.squareSpace }, transition)
+            rect.data.point[0] = c
+            rect.data.point[1] = r
+        }
+
+        // 增量移动
+        rect.$moveLeft = (d = 1, transition) => rect.$moveTo(rect.data.point[0] - d, rect.data.point[1], transition)
+        rect.$moveRight = (d = 1, transition) => rect.$moveTo(rect.data.point[0] + d, rect.data.point[1], transition)
+        rect.$moveUp = (d = 1, transition) => rect.$moveTo(rect.data.point[0], rect.data.point[1] - d, transition)
+        rect.$moveDown = (d = 1, transition) => rect.$moveTo(rect.data.point[0], rect.data.point[1] + d, transition)
 
         return rect
     }
@@ -320,4 +340,5 @@ export default class BaseElement {
     destroy() {
         this.group.destroy()
     }
+    
 }

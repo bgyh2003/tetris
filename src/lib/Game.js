@@ -1,6 +1,13 @@
 import { App, Leafer, Rect, Group, Box } from 'leafer-ui'
 import Background from './Background'
 import ElementT from './ElementT'
+import ElementZ from './ElementZ'
+import ElementZ2 from './ElementZ2'
+import ElementO from './ElementO'
+import ElementL from './ElementL'
+import ElementL2 from './ElementL2'
+import ElementI from './ElementI'
+
 export default class Game {
 
     constructor(options) {
@@ -19,7 +26,6 @@ export default class Game {
             squareColor: "#555",// 方块亮色
             ...options
         }
-
 
         // 计算画布实际宽高
         this.realWidth = this.attrs.cols * (this.attrs.squareSize + this.attrs.squareSpace) + this.attrs.squareSpace
@@ -63,6 +69,13 @@ export default class Game {
         // 创建背景
         this.createBackground()
 
+        // 总共消除的行数
+        this.clearNum = 0
+
+    }
+
+    async sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms))
     }
 
     // 创建背景网格线条
@@ -115,10 +128,10 @@ export default class Game {
         //     i++
         // }
 
-        for (let r = this.attrs.rows - num; r < this.attrs.rows; r++) {
-            for (let c = 0; c < this.attrs.cols-1; c++)points.push([c, r])
-            i++
-        }
+        // for (let r = this.attrs.rows - num; r < this.attrs.rows; r++) {
+        //     for (let c = 0; c < this.attrs.cols - 1; c++)points.push([c, r])
+        //     i++
+        // }
 
         // 添加干扰行
         this.background.addPoints(points)
@@ -140,8 +153,14 @@ export default class Game {
             case 'L':
                 this.element = new ElementL(this.attrs)
                 break
+            case 'L2':
+                this.element = new ElementL2(this.attrs)
+                break
             case 'Z':
                 this.element = new ElementZ(this.attrs)
+                break
+            case 'Z2':
+                this.element = new ElementZ2(this.attrs)
                 break
         }
 
@@ -178,11 +197,20 @@ export default class Game {
     }
 
     moveToBottom() {
+
         // 计算到底部距离
         let d = this.element.distance(this.background, "down")
         if (d === null) d = this.element.distanceEdge("down")
+
         // 移动
         this.element.moveDown(d)
+
+        // 合并
+        this.merge()
+
+        // 清除行 
+        this.clearRow()
+
     }
 
     rotate() {
@@ -203,10 +231,42 @@ export default class Game {
     merge() {
         this.background.merge(this.element)
         this.element.destroy()
+        this.createElement(this.getRandomType())
     }
 
     clearRow() {
-        this.background.clearRow()
+        const { num } = this.background.clearRow()
+        this.clearNum += num
+    }
+
+    // 随机选择一个type
+    getRandomType() {
+        const types = ['T', 'I', 'O', 'L', 'L2', 'Z', 'Z2']
+        return types[Math.floor(Math.random() * types.length)]
+    }
+
+    // 开始
+    async start() {
+
+        this.createElement(this.getRandomType())
+
+        while (true) {
+
+            if (
+                this.element.distance(this.background, "down") === 0 ||
+                this.element.distanceEdge("down") === 0
+            ) {
+                this.merge()
+                this.clearRow()
+            } else {
+                this.moveDown()
+            }
+
+            await this.sleep(1000)
+
+        }
+
+
     }
 
 }
