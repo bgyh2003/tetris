@@ -317,14 +317,21 @@ export default class BaseElement {
     }
 
     // 边界碰撞检测
-    collisionDetectionEdge() {
+    collisionDetectionEdge(directions = ["down", "right", "left", "up"]) {
 
         // 获取图形的绝对点坐标
         const points = this.getAbsolutePoints()
 
         // 遍历所有点
         for (const point of points) {
-            if (point[0] < 0 || point[0] >= this.cols || point[1] < 0 || point[1] >= this.rows) return true
+
+            for (const direction of directions) {
+                if (direction === "down" && point[1] >= this.rows) return true
+                if (direction === "right" && point[0] >= this.cols) return true
+                if (direction === "left" && point[0] < 0) return true
+                if (direction === "up" && point[1] < 0) return true
+            }
+
         }
 
         return false
@@ -340,5 +347,5 @@ export default class BaseElement {
     destroy() {
         this.group.destroy()
     }
-    
+
 }

@@ -4,7 +4,7 @@ export default class ElementZ extends BaseElement {
 
     static imageData = {
 
-        anchor: [1, 0],
+        anchor: [1, 1],
 
         points: [
 

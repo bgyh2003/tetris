@@ -3,75 +3,56 @@ import { ref, useTemplateRef, onMounted } from 'vue'
 import Game from './lib/Game';
 
 // 获取画布dom引用
-const stageDom = useTemplateRef('stage')
+const container = useTemplateRef('container')
 
 // 游戏实例
 let game = null
 
 onMounted(() => {
 
-    console.time("init game")
-
-    // 实例化化游戏
+    // 实例化游戏
     game = new Game({
-        view: stageDom.value, // 画布dom
+        container: container.value, // 画布dom
         cols: 13,
         rows: 20,
-        viewHeight: 600,
-        viewWidth: 400,
+        viewHeight: 500,
+        viewWidth: 330,
         squareSize: 30,
-        squareSpace: 1
+        squareSpace: 1,
+
+        onClearRow: (num, total) => {
+            console.log('本次消除了' + num + '行')
+            console.log('当前总消除行数' + total)
+        },
+
+        onGameOver: () => {
+            console.log('游戏结束')
+        }
     })
 
-    console.timeEnd("init game")
-
 })
-
 
 </script>
 
 <template>
 
-    <div class="flex bg-white p-2" style="min-width: 230px;">
-
-        <a-form layout="vertical" size="mini">
-            <a-form-item field="name" label="Username">
-                <a-input placeholder="please enter your username..." />
-            </a-form-item>
-            <a-form-item field="post" label="Post">
-                <a-input placeholder="please enter your post..." />
-            </a-form-item>
-            <a-form-item field="isRead">
-                <a-checkbox>
-                    I have read the manual
-                </a-checkbox>
-            </a-form-item>
-            <a-form-item>
-                <a-button @click="game.start()">start</a-button>
-                <a-button @click="game.pause()">pause</a-button>
-                <a-button @click="game.stop()">stop</a-button>
-            </a-form-item>
-            <a-form-item>
-                <a-button @click="game.moveLeft()">left</a-button>
-                <a-button @click="game.moveRight()">right</a-button>
-                <a-button @click="game.moveDown()">down</a-button>
-                <a-button @click="game.rotate()">rotate</a-button>
-            </a-form-item>
-
-            <a-form-item>
-                <a-button @click="game.moveToBottom()">buttom</a-button>
-            </a-form-item>
-        </a-form>
-
-
-    </div>
-
-    <div class="flex flex-1 justify-center items-center gap-5 bg-white">
-        <div class="h-auto bg-amber-100">
-            <div ref="stage"></div>
+    <div class="flex flex-1 flex-col gap-2 max-w-screen-sm">
+        <div class="flex  p-2 bg-white">
+            1
         </div>
-        <!-- <div class=" h-auto bg-slate-200" style="height: 600px; width: 200px;"></div> -->
+
+        <div ref="container" class="flex flex-1 p-2 bg-white justify-center items-center"></div>
+
+        <div class="flex p-2 bg-white">
+            3
+        </div>
+
+
     </div>
+
+
+
+
 
 
 </template>

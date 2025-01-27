@@ -1,4 +1,5 @@
-import { App, Leafer, Rect, Group, Box } from 'leafer-ui'
+import { App, Leafer, Rect, } from 'leafer-ui'
+import HotKey from './HotKey'
 import Background from './Background'
 import ElementT from './ElementT'
 import ElementZ from './ElementZ'
@@ -14,7 +15,6 @@ export default class Game {
 
         // 默认属性
         this.attrs = {
-            view: null, // 画布容器
             viewWidth: null,  // 画布显示宽度(留空自动计算)
             viewHeight: null, // 画布显示高度(留空自动计算)
             rows: 20, // 行数
@@ -26,6 +26,7 @@ export default class Game {
             squareColor: "#555",// 方块亮色
             ...options
         }
+
 
         // 计算画布实际宽高
         this.realWidth = this.attrs.cols * (this.attrs.squareSize + this.attrs.squareSpace) + this.attrs.squareSpace
@@ -39,13 +40,22 @@ export default class Game {
         this.scaleX = this.attrs.viewWidth === null ? 1 : this.attrs.viewWidth / this.realWidth
         this.scaleY = this.attrs.viewHeight === null ? 1 : this.attrs.viewHeight / this.realHeight
 
+        this.view = document.createElement("div")
+        this.view.style.width = this.width + "px"
+        this.view.style.height = this.height + "px"
+
+        this.container = options.container
+
+
         // 创建画布app
         this.app = new App({
-            view: this.attrs.view,
+            view: this.view,
             fill: this.attrs.groundFillColor,
             width: this.width,
             height: this.height
         })
+
+        this.container.appendChild(this.view)
 
         // 创建ground
         this.app.ground = new Leafer()
@@ -66,16 +76,36 @@ export default class Game {
         // 元素对象
         this.element = null
 
-        // 创建背景
-        this.createBackground()
+        // 循环对象
+        this.loop = null
+
+        // 速度
+        this.speed = 1000
+
+        // 状态 0:停止 1:运行 2:暂停 3:游戏结束
+        this.status = 0
+
+        // 下一个元素类型
+        this.nextType = this.getRandomType()
 
         // 总共消除的行数
         this.clearNum = 0
 
-    }
+        // 行消除回调
+        this.onClearRow = options.onClearRow ?? function () { }
 
-    async sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms))
+        // 游戏结束回调
+        this.onGameOver = options.onGameOver ?? function () { }
+
+        // 键盘事件
+        this.hotkey = new HotKey()
+        this.hotkey.add(["arrowup"], () => this.rotate())
+        this.hotkey.add(["arrowdown"], () => this.moveDown())
+        this.hotkey.add(["arrowleft"], () => this.moveLeft())
+        this.hotkey.add(["arrowright"], () => this.moveRight())
+        this.hotkey.add([" "], () => this.moveToBottom())
+        this.hotkey.start()
+
     }
 
     // 创建背景网格线条
@@ -110,10 +140,10 @@ export default class Game {
     }
 
     // 创建背景元素
-    createBackground() {
+    createBackground(n = 0) {
         this.background = new Background(this.attrs)
         this.app.ground.add(this.background.group)
-        this.createInterferenceRow(2)
+        this.createInterferenceRow(n)
     }
 
     // 创建干扰行
@@ -123,22 +153,19 @@ export default class Game {
 
         // 创建干扰行
         let i = 0
-        // for (let r = this.attrs.rows - num; r < this.attrs.rows; r++) {
-        //     for (let c = i % 2; c < this.attrs.cols; c += 2)points.push([c, r])
-        //     i++
-        // }
-
-        // for (let r = this.attrs.rows - num; r < this.attrs.rows; r++) {
-        //     for (let c = 0; c < this.attrs.cols - 1; c++)points.push([c, r])
-        //     i++
-        // }
+        for (let r = this.attrs.rows - num; r < this.attrs.rows; r++) {
+            for (let c = i % 2; c < this.attrs.cols; c += 2)points.push([c, r])
+            i++
+        }
 
         // 添加干扰行
         this.background.addPoints(points)
     }
 
     // 创建元素
-    createElement(type) {
+    createElement() {
+
+        const type = this.nextType
 
         switch (type) {
             case 'T':
@@ -170,9 +197,19 @@ export default class Game {
         // 添加到主画布中
         this.app.tree.add(this.element.group)
 
+        // 下一个元素
+        this.nextType = this.getRandomType()
+
+        // 检测是否与背景元素重叠
+        if (this.element.collisionDetection(this.background)) this.gameOver()
+
     }
 
+    // 向下移动
     moveDown() {
+
+        if (this.status !== 1) return
+
         // 检测是否到边缘
         if (this.element.distance(this.background, "down") === 0) return
         if (this.element.distanceEdge("down") === 0) return
@@ -180,7 +217,11 @@ export default class Game {
         this.element.moveDown()
     }
 
+    // 向左移动
     moveLeft() {
+
+        if (this.status !== 1) return
+
         // 检测是否到边缘
         if (this.element.distance(this.background, "left") === 0) return
         if (this.element.distanceEdge("left") === 0) return
@@ -188,7 +229,11 @@ export default class Game {
         this.element.moveLeft()
     }
 
+    // 向右移动
     moveRight() {
+
+        if (this.status !== 1) return
+
         // 检测是否到边缘
         if (this.element.distance(this.background, "right") === 0) return
         if (this.element.distanceEdge("right") === 0) return
@@ -196,7 +241,10 @@ export default class Game {
         this.element.moveRight()
     }
 
+    // 向下移动到底部
     moveToBottom() {
+
+        if (this.status !== 1) return
 
         // 计算到底部距离
         let d = this.element.distance(this.background, "down")
@@ -216,29 +264,34 @@ export default class Game {
 
     }
 
+    // 旋转
     rotate() {
+
+        if (this.status !== 1) return
 
         // 切换图片
         this.element.nextBox()
 
-
         // 如果触碰到边缘，恢复上一个图片
         if (
             this.element.collisionDetection(this.background) ||
-            this.element.collisionDetectionEdge()
+            this.element.collisionDetectionEdge(["right", "left", "down"])
         ) {
             this.element.lastBox()
         }
     }
 
+    // 合并
     merge() {
         this.background.merge(this.element)
         this.element.destroy()
     }
 
+    // 清除行
     clearRow() {
         const { num } = this.background.clearRow()
         this.clearNum += num
+        num > 0 && this.onClearRow(num, this.clearNum)
     }
 
     // 随机选择一个type
@@ -247,29 +300,82 @@ export default class Game {
         return types[Math.floor(Math.random() * types.length)]
     }
 
-    // 开始
-    async start() {
+    loopFunction() {
+        // 如果当前是停止状态，退出循环
+        if (this.status === 0) return
 
-        this.createElement(this.getRandomType())
-
-        while (true) {
-
-            if (
-                this.element.distance(this.background, "down") === 0 ||
-                this.element.distanceEdge("down") === 0
-            ) {
-                this.merge()
-                this.createElement(this.getRandomType())
-                this.clearRow()
-            } else {
-                this.moveDown()
-            }
-
-            await this.sleep(1000)
-
+        if (
+            this.element.distance(this.background, "down") === 0 ||
+            this.element.distanceEdge("down") === 0
+        ) {
+            this.merge()
+            this.createElement()
+            this.clearRow()
+        } else {
+            this.moveDown()
         }
 
+    }
 
+    // 开始
+    start() {
+
+        // 当前为运行状态 直接退出
+        if (this.status === 1) return
+
+        // 设置状态
+        this.status = 1
+
+        // 创建背景和元素
+        this.createBackground()
+        this.createElement()
+
+        // 进入循环
+        this.loop = setInterval(() => {
+            this.loopFunction()
+        }, this.speed)
+
+    }
+
+    // 停止
+    stop() {
+
+        if (this.status === 0) return
+
+        clearInterval(this.loop)
+        this.status = 0
+        this.background.destroy()
+        this.background = null
+        this.element.destroy()
+        this.element = null
+        this.clearNum = 0
+    }
+
+    // 暂停
+    pause() {
+        if (this.status === 1) {
+            this.status = 2
+            clearInterval(this.loop)
+        }
+        else if (this.status === 2) {
+            this.status = 1
+            this.loop = setInterval(() => {
+                this.loopFunction()
+            }, this.speed)
+        }
+    }
+
+    // 游戏结束
+    gameOver() {
+        this.status = 3
+        clearInterval(this.loop)
+        this.onGameOver()
+    }
+
+    destroy() {
+        this.stop()
+        this.app.destroy()
+        this.hotkey.destroy()
     }
 
 }
