@@ -217,10 +217,10 @@ export default class BaseElement {
 
         // 遍历所有Rect
         for (const rect of box.find("Rect")) {
-            const [c, r] = rect.data.point
+            const [c, r, color] = rect.data.point
             const anchorC = this.anchor[0]
             const anchorR = this.anchor[1]
-            res.push([baseC + c - anchorC, baseR + r - anchorR])
+            res.push([baseC + c - anchorC, baseR + r - anchorR, color])
         }
 
         return res

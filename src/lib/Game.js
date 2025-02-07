@@ -15,6 +15,7 @@ export default class Game {
 
         // 默认属性
         this.attrs = {
+            autoSize: true,// 自适应尺寸
             viewWidth: null,  // 画布显示宽度(留空自动计算)
             viewHeight: null, // 画布显示高度(留空自动计算)
             rows: 20, // 行数
@@ -40,12 +41,19 @@ export default class Game {
         this.scaleX = this.attrs.viewWidth === null ? 1 : this.attrs.viewWidth / this.realWidth
         this.scaleY = this.attrs.viewHeight === null ? 1 : this.attrs.viewHeight / this.realHeight
 
+        // 创建leafer容器
         this.view = document.createElement("div")
         this.view.style.width = this.width + "px"
         this.view.style.height = this.height + "px"
 
+        // 画布容器
         this.container = options.container
 
+        // 预览容器
+        this.previewContainer = options.preview ?? null
+
+        // 预览画布
+        this.preview = this.createPreview()
 
         // 创建画布app
         this.app = new App({
@@ -55,7 +63,9 @@ export default class Game {
             height: this.height
         })
 
+        // 添加画布到容器
         this.container.appendChild(this.view)
+
 
         // 创建ground
         this.app.ground = new Leafer()
@@ -80,7 +90,7 @@ export default class Game {
         this.loop = null
 
         // 速度
-        this.speed = 1000
+        this.speed = options.speed ?? 1000
 
         // 状态 0:停止 1:运行 2:暂停 3:游戏结束
         this.status = 0
@@ -106,6 +116,21 @@ export default class Game {
         this.hotkey.add([" "], () => this.moveToBottom())
         this.hotkey.start()
 
+
+    }
+
+    createPreview() {
+        if (this.previewContainer === null) return
+
+        const preview = new Leafer({
+            view: this.previewContainer,
+            width: this.previewContainer.offsetWidth,
+            height: this.previewContainer.offsetWidth,
+        })
+
+        preview.set({ scale: this.previewContainer.offsetWidth / ((this.attrs.squareSize + this.attrs.squareSpace) * 4 + this.attrs.squareSpace) })
+
+        return preview
     }
 
     // 创建背景网格线条
@@ -192,7 +217,7 @@ export default class Game {
         }
 
         // 设置位置
-        this.element.moveTo(Math.floor(this.attrs.cols / 2), 0)
+        this.element.moveTo(Math.floor(this.attrs.cols / 2), 1)
 
         // 添加到主画布中
         this.app.tree.add(this.element.group)
@@ -297,7 +322,46 @@ export default class Game {
     // 随机选择一个type
     getRandomType() {
         const types = ['T', 'I', 'O', 'L', 'L2', 'Z', 'Z2']
-        return types[Math.floor(Math.random() * types.length)]
+        const type = types[Math.floor(Math.random() * types.length)]
+
+        // 创建预览元素
+        if (this.preview) {
+
+            // 清空预览元素
+            this.preview.clear()
+
+            let element = null
+
+            switch (type) {
+                case 'T':
+                    element = new ElementT(this.attrs)
+                    break
+                case 'I':
+                    element = new ElementI(this.attrs)
+                    break
+                case 'O':
+                    element = new ElementO(this.attrs)
+                    break
+                case 'L':
+                    element = new ElementL(this.attrs)
+                    break
+                case 'L2':
+                    element = new ElementL2(this.attrs)
+                    break
+                case 'Z':
+                    element = new ElementZ(this.attrs)
+                    break
+                case 'Z2':
+                    element = new ElementZ2(this.attrs)
+                    break
+            }
+
+            this.preview.add(element.group)
+            element.moveTo(1, 1)
+        }
+
+
+        return type
     }
 
     loopFunction() {
@@ -331,9 +395,7 @@ export default class Game {
         this.createElement()
 
         // 进入循环
-        this.loop = setInterval(() => {
-            this.loopFunction()
-        }, this.speed)
+        this.loop = setInterval(() => this.loopFunction(), this.speed)
 
     }
 
@@ -357,11 +419,13 @@ export default class Game {
             this.status = 2
             clearInterval(this.loop)
         }
-        else if (this.status === 2) {
+    }
+
+    // 取消暂停
+    cancelPause() {
+        if (this.status === 2) {
             this.status = 1
-            this.loop = setInterval(() => {
-                this.loopFunction()
-            }, this.speed)
+            this.loop = setInterval(() => this.loopFunction(), this.speed)
         }
     }
 
@@ -372,10 +436,14 @@ export default class Game {
         this.onGameOver()
     }
 
+    // 销毁
     destroy() {
         this.stop()
-        this.app.destroy()
+        this.app.destroy(true)
         this.hotkey.destroy()
+        this.view.remove()
+
+        if (this.preview) this.preview.destroy(true)
     }
 
 }

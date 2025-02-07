@@ -22,8 +22,6 @@ export default class Background extends BaseElement {
     // 消除行
     clearRow() {
 
-        let minR = 0
-
         // 满行列表
         const rows = []
 
@@ -46,6 +44,7 @@ export default class Background extends BaseElement {
         // 存在满行
         if (rows.length > 0) {
 
+            // 排序全部方块
             const rects = this.boxes[this.boxIndex].find("Rect").sort((a, b) => b.data.point[1] - a.data.point[1])
 
             // 消除行
@@ -58,13 +57,25 @@ export default class Background extends BaseElement {
                 }
             }
 
-            // 获取消除的最小行号
-            minR = Math.min(...rows)
+            // 满行（消除行）排序
+            rows.sort()
 
             // 移动行
             for (const rect of rects) {
-                if (rect.data.point[1] < minR) {
-                    rect.$moveDown(rows.length, { duration: 0.2, delay: 0.2 })
+
+                // 当前方块所属行
+                const r = rect.data.point[1]
+
+                // 如果是消除行，跳过
+                if (rows.includes(r)) continue
+
+                // 比较
+                for (const row of rows) {
+                    if (r < row) {
+                        let i = rows.indexOf(row)
+                        rect.$moveDown(rows.length - i, { duration: 0.2, delay: 0.2 })
+                        break
+                    }
                 }
             }
 

@@ -6,6 +6,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/tetris_page/', // 二级目录名称
   plugins: [
     vue(),
     vueDevTools(),
